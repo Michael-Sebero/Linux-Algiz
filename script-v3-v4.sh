@@ -1,8 +1,9 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-# Path to your kernel package directory
-PKGDIR="$HOME/Files/GitHub/Linux-Algiz/linux-cachyos"
+# Locate the linux-cachyos directory relative to where this script lives
+SCRIPT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
+PKGDIR="$SCRIPT_DIR/linux-cachyos"
 
 cd "$PKGDIR"
 
@@ -36,7 +37,7 @@ prepare() {
                      --enable MODULE_COMPRESS \
                      --enable MODULE_COMPRESS_ZSTD || true
 }
-
+# === End Fast & Trimmed Config ===
 EOF
 fi
 
@@ -67,8 +68,8 @@ CXX="ccache g++" \
 makepkg -si --noconfirm
 
 # 7) Move built package (optional, adjust path as needed)
-mkdir -p "$HOME/repo/x86_64_${repo_suffix}/cachyos-${repo_suffix}/"
+mkdir -p "$SCRIPT_DIR/repo/x86_64_${repo_suffix}/cachyos-${repo_suffix}/"
 mv ./*-x86_64_${repo_suffix}.pkg.tar.zst* \
-   "$HOME/repo/x86_64_${repo_suffix}/cachyos-${repo_suffix}/" || true
+   "$SCRIPT_DIR/repo/x86_64_${repo_suffix}/cachyos-${repo_suffix}/" || true
 
 echo "✅ Kernel build complete for ${proc_opt}"
