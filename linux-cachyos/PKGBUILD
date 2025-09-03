@@ -78,7 +78,7 @@
 # CPU compiler optimizations - Defaults to native if left empty
 # - "native" (use compiler autodetection)
 # - "zen4" (Use znver4 compiler optimizations)
-# - "generic" (kernel's default - to share the package between machines with different CPU Âµarch as long as they are x86-64)
+# - "generic" (kernel's default - to share the package between machines with different CPU µarch as long as they are x86-64)
 : "${_processor_opt:=}"
 
 # Clang LTO mode, only available with the "llvm" compiler - options are "none", "full" or "thin".
