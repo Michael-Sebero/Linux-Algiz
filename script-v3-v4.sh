@@ -62,6 +62,9 @@ fi
 sed -i "s/_processor_opt:=.*/_processor_opt:=${proc_opt}/" PKGBUILD
 
 # 6) Build kernel
+export BUILDDIR="$PKGDIR/build"
+mkdir -p "$BUILDDIR"
+
 MAKEFLAGS="-j$(nproc)" \
 CC="ccache gcc" \
 CXX="ccache g++" \
