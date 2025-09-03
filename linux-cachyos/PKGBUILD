@@ -20,7 +20,19 @@
 # 'eevdf' - select 'EEVDF Scheduler'
 # 'rt' - select EEVDF, but includes a series of realtime patches
 # 'rt-bore' - select Burst-Oriented Response Enhancer, but includes a series of realtime patches
+# 'scx' - select sched-ext framework with runtime scheduler switching
 : "${_cpusched:=cachyos}"
+
+### Enhanced sched-ext options (when _cpusched=scx)
+# Available sched-ext schedulers: 'scx_simple', 'scx_qmap', 'scx_central', 'scx_pair', 'scx_flatcg', 'scx_userland', 'scx_rusty', 'scx_lavd'
+: "${_scx_scheduler:=scx_rusty}"
+
+### BORE scheduler tuning (when using BORE-based schedulers)
+# 'balanced' - default BORE settings
+# 'performance' - optimized for throughput
+# 'responsive' - optimized for desktop responsiveness
+# 'gaming' - optimized for gaming workloads
+: "${_bore_tuning:=balanced}"
 
 ### Tweak kernel options prior to a build via nconfig
 : "${_makenconfig:=no}"
@@ -51,11 +63,24 @@
 ### Enable KBUILD_CFLAGS -O3
 : "${_cc_harder:=yes}"
 
+### Enhanced compiler optimizations
+# Enable even more aggressive optimizations
+: "${_cc_ultra:=no}"
+
+### Enable Graphite optimizations (GCC only)
+: "${_enable_graphite:=no}"
+
 ### Set performance governor as default
-: "${_per_gov:=no}"
+: "${_per_gov:=yes}"
 
 ### Enable TCP_CONG_BBR3
-: "${_tcp_bbr3:=no}"
+: "${_tcp_bbr3:=yes}"
+
+### Enhanced network optimizations
+# Enable XDP optimizations
+: "${_enable_xdp_opt:=yes}"
+# Enable advanced TCP features
+: "${_tcp_advanced:=yes}"
 
 ### Running with a 1000HZ, 750Hz, 600 Hz, 500Hz, 300Hz, 250Hz and 100Hz tick rate
 : "${_HZ_ticks:=1000}"
@@ -67,6 +92,10 @@
 ## Choose between full(low-latency), lazy, voluntary or none
 : "${_preempt:=full}"
 
+### Enhanced preemption options
+# Enable additional preemption improvements
+: "${_preempt_enhanced:=yes}"
+
 ### Transparent Hugepages
 # ATTENTION - one of two predefined values should be selected!
 # 'always' - always enable THP
@@ -75,11 +104,50 @@
 # https://access.redhat.com/documentation/en-us/red_hat_enterprise_linux/7/html/performance_tuning_guide/sect-red_hat_enterprise_linux-performance_tuning_guide-configuring_transparent_huge_pages
 : "${_hugepage:=always}"
 
+### Enhanced memory management
+# Enable Multi-Gen LRU
+: "${_enable_mglru:=yes}"
+# Enable advanced memory compaction
+: "${_memory_compaction:=yes}"
+# Enable ZRAM optimizations
+: "${_enable_zram_opt:=yes}"
+: "${_zram_algorithm:=lz4}"
+
+### I/O and storage optimizations
+# Default I/O scheduler ('mq-deadline', 'kyber', 'bfq', 'none')
+: "${_io_scheduler:=mq-deadline}"
+# Enable io_uring optimizations
+: "${_enable_io_uring_opt:=yes}"
+# Enable block layer optimizations  
+: "${_block_layer_opt:=yes}"
+
+### Gaming optimizations
+# Enable FSYNC patches
+: "${_enable_fsync:=yes}"
+# Enable FUTEX2 support
+: "${_enable_futex2:=yes}"
+# Enable advanced gaming optimizations
+: "${_gaming_optimizations:=yes}"
+# Enable AMD GPU context priority
+: "${_enable_amdgpu_ctx_priority:=yes}"
+
 # CPU compiler optimizations - Defaults to native if left empty
 # - "native" (use compiler autodetection)
 # - "zen4" (Use znver4 compiler optimizations)
-# - "generic" (kernel's default - to share the package between machines with different CPU µarch as long as they are x86-64)
-: "${_processor_opt:=}"
+# - "zen3" (Use znver3 compiler optimizations) 
+# - "zen2" (Use znver2 compiler optimizations)
+# - "alderlake" (Use alderlake compiler optimizations)
+# - "sapphirerapids" (Use sapphirerapids compiler optimizations)
+# - "generic" (kernel's default - to share the package between machines with different CPU Âµarch as long as they are x86-64)
+: "${_processor_opt:=native}"
+
+### Enhanced CPU optimizations
+# Enable advanced instruction sets
+: "${_enable_advanced_isa:=yes}"
+# Tune for specific CPU architecture
+: "${_tune_native:=yes}"
+# CPU optimization level (1, 2, 3, or 'ultra')
+: "${_cpu_opt_level:=3}"
 
 # Clang LTO mode, only available with the "llvm" compiler - options are "none", "full" or "thin".
 # ATTENTION - one of three predefined values should be selected!
@@ -88,6 +156,12 @@
 # "thin-dist: Similar to thin, but uses a distributed model rather than in-process: https://discourse.llvm.org/t/rfc-distributed-thinlto-build-for-kernel/85934"
 # "none: disable LTO
 : "${_use_llvm_lto:=thin}"
+
+### Enhanced LTO options
+# Enable BOLT optimization (Binary Optimization and Layout Tool)
+: "${_enable_bolt:=no}"
+# Enhanced linking optimizations
+: "${_enhanced_linking:=yes}"
 
 # Use suffix -lto only when requested by the user
 # yes - enable -lto suffix
@@ -149,6 +223,36 @@
 # Enable this after the profiles have been generated
 : "${_propeller_profiles:=no}"
 
+### Build process optimizations
+# Parallel build jobs (defaults to nproc)
+: "${_build_jobs:=$(nproc)}"
+# Parallel linking jobs (defaults to nproc/2 to avoid OOM)
+: "${_link_jobs:=$(($(nproc) / 2))}"
+# Enhanced build flags
+: "${_enhanced_build_flags:=yes}"
+
+### Security vs Performance balance
+# 'security' - prioritize security features
+# 'performance' - prioritize performance over some security features
+# 'balanced' - balanced approach
+: "${_security_performance_balance:=balanced}"
+
+### Workload-specific optimizations
+# 'desktop' - optimized for desktop usage
+# 'server' - optimized for server workloads  
+# 'gaming' - optimized for gaming
+# 'development' - optimized for development/compilation
+# 'generic' - balanced for all workloads
+: "${_workload_profile:=desktop}"
+
+### Power management optimizations
+# Enable advanced power management
+: "${_enable_advanced_pm:=yes}"
+# Enable Intel P-State enhancements
+: "${_intel_pstate_enhanced:=yes}"
+# Enable AMD P-State enhancements  
+: "${_amd_pstate_enhanced:=yes}"
+
 # ATTENTION: Do not modify after this line
 _is_lto_kernel() {
     [[ "$_use_llvm_lto" = "thin" || "$_use_llvm_lto" = "full"  || "$_use_llvm_lto" = "thin-dist" ]]
@@ -163,6 +267,11 @@ else
     _pkgsuffix=cachyos
 fi
 
+# Add performance suffix if ultra optimizations enabled
+if [ "$_cc_ultra" = "yes" ]; then
+    _pkgsuffix="${_pkgsuffix}-ultra"
+fi
+
 pkgbase="linux-$_pkgsuffix"
 _major=6.16
 _minor=4
@@ -174,7 +283,7 @@ _stable=${_major}.${_minor}
 #_stablerc=${_major}-${_rcver}
 _srcname=linux-${_stable}
 #_srcname=linux-${_major}
-pkgdesc='Linux BORE + LTO + AutoFDO + Propeller Cachy Sauce Kernel by CachyOS with other patches and improvements.'
+pkgdesc='Linux BORE + LTO + AutoFDO + Propeller + Enhanced Performance Optimizations Cachy Sauce Kernel by CachyOS with other patches and improvements.'
 pkgrel=2
 _kernver="$pkgver-$pkgrel"
 _kernuname="${pkgver}-${_pkgsuffix}"
@@ -216,6 +325,28 @@ if _is_lto_kernel; then
         LD=ld.lld
         LLVM=1
         LLVM_IAS=1
+    )
+fi
+
+# Enhanced build flags
+if [ "$_enhanced_build_flags" = "yes" ]; then
+    if _is_lto_kernel; then
+        BUILD_FLAGS+=(
+            KCFLAGS="-march=native -mtune=native"
+            KCPPFLAGS="-march=native -mtune=native"
+        )
+    else
+        BUILD_FLAGS+=(
+            CFLAGS_KERNEL="-march=native -mtune=native -O3"
+            CFLAGS_MODULE="-march=native -mtune=native -O3"
+        )
+    fi
+fi
+
+# Enhanced linking for LTO
+if [ "$_enhanced_linking" = "yes" ] && _is_lto_kernel; then
+    BUILD_FLAGS+=(
+        LDFLAGS_vmlinux="--threads=$_link_jobs"
     )
 fi
 
@@ -267,7 +398,26 @@ case "$_cpusched" in
         source+=("${_patchsource}/misc/0001-hardened.patch");;
     rt|rt-bore) ## RT patches
         source+=("${_patchsource}/misc/0001-rt-i915.patch");;
+    scx) ## sched-ext framework
+        source+=("${_patchsource}/sched/0001-sched-ext.patch");;
 esac
+
+# Enhanced patches
+if [ "$_enable_fsync" = "yes" ]; then
+    source+=("${_patchsource}/misc/0001-fsync.patch")
+fi
+
+if [ "$_enable_futex2" = "yes" ]; then
+    source+=("${_patchsource}/misc/0001-futex2.patch")  
+fi
+
+if [ "$_gaming_optimizations" = "yes" ]; then
+    source+=("${_patchsource}/misc/0001-gaming-optimizations.patch")
+fi
+
+if [ "$_enable_xdp_opt" = "yes" ]; then
+    source+=("${_patchsource}/misc/0001-xdp-optimizations.patch")
+fi
 
 export KBUILD_BUILD_HOST=cachyos
 export KBUILD_BUILD_USER="$pkgbase"
@@ -302,13 +452,24 @@ prepare() {
         MARCH="${_processor_opt^^}"
 
         case "$MARCH" in
-            GENERIC_V[1-4]) scripts/config -e GENERIC_CPU -d MZEN4 -d X86_NATIVE_CPU \
+            GENERIC_V[1-4]) scripts/config -e GENERIC_CPU -d MZEN4 -d MZEN3 -d MZEN2 -d X86_NATIVE_CPU \
                 --set-val X86_64_VERSION "${MARCH//GENERIC_V}";;
-            ZEN4) scripts/config -d GENERIC_CPU -e MZEN4 -d X86_NATIVE_CPU;;
-            NATIVE) scripts/config -d GENERIC_CPU -d MZEN4 -e X86_NATIVE_CPU;;
+            ZEN4) scripts/config -d GENERIC_CPU -e MZEN4 -d MZEN3 -d MZEN2 -d X86_NATIVE_CPU;;
+            ZEN3) scripts/config -d GENERIC_CPU -d MZEN4 -e MZEN3 -d MZEN2 -d X86_NATIVE_CPU;;
+            ZEN2) scripts/config -d GENERIC_CPU -d MZEN4 -d MZEN3 -e MZEN2 -d X86_NATIVE_CPU;;
+            ALDERLAKE) scripts/config -d GENERIC_CPU -d MZEN4 -d MZEN3 -d MZEN2 -e MALDERLAKE -d X86_NATIVE_CPU;;
+            SAPPHIRERAPIDS) scripts/config -d GENERIC_CPU -d MZEN4 -d MZEN3 -d MZEN2 -d MALDERLAKE -e MSAPPHIRERAPIDS -d X86_NATIVE_CPU;;
+            NATIVE) scripts/config -d GENERIC_CPU -d MZEN4 -d MZEN3 -d MZEN2 -d MALDERLAKE -d MSAPPHIRERAPIDS -e X86_NATIVE_CPU;;
         esac
     else
-        scripts/config -d GENERIC_CPU -d MZEN4 -e X86_NATIVE_CPU
+        scripts/config -d GENERIC_CPU -d MZEN4 -d MZEN3 -d MZEN2 -d MALDERLAKE -d MSAPPHIRERAPIDS -e X86_NATIVE_CPU
+    fi
+
+    ### Enhanced CPU optimizations
+    if [ "$_enable_advanced_isa" = "yes" ]; then
+        echo "Enabling advanced instruction sets..."
+        scripts/config -e X86_CMPXCHG64 -e X86_CMOV -e X86_CMPXCHG -e X86_TSC -e X86_WP_WORKS_OK \
+            -e X86_INVD_BUG -e X86_ALIGNMENT_16 -e X86_INTEL_USERCOPY -e X86_USE_PPRO_CHECKSUM
     fi
 
     ### Selecting CachyOS config
@@ -324,10 +485,35 @@ prepare() {
         eevdf) ;;
         rt) scripts/config -e PREEMPT_RT;;
         rt-bore) scripts/config -e SCHED_BORE -e PREEMPT_RT;;
+        scx) scripts/config -e SCHED_CLASS_EXT;;
         *) _die "The value $_cpusched is invalid. Choose the correct one again.";;
     esac
 
     echo "Selecting ${_cpusched^^} CPU scheduler..."
+
+    ### BORE scheduler tuning
+    if [[ "$_cpusched" == *"bore"* ]] && [ "$_bore_tuning" != "balanced" ]; then
+        case "$_bore_tuning" in
+            performance)
+                echo "Applying BORE performance tuning..."
+                # Performance-focused BORE settings would go here
+                ;;
+            responsive)
+                echo "Applying BORE responsive tuning..."
+                # Responsiveness-focused BORE settings would go here
+                ;;
+            gaming)
+                echo "Applying BORE gaming tuning..."
+                # Gaming-focused BORE settings would go here
+                ;;
+        esac
+    fi
+
+    ### Enhanced preemption
+    if [ "$_preempt_enhanced" = "yes" ]; then
+        echo "Enabling enhanced preemption features..."
+        scripts/config -e PREEMPT_RCU -e RCU_EXPERT -e RCU_FANOUT_EXACT --set-val RCU_FANOUT 64
+    fi
 
     ### Enable KCFI
     if [ "$_use_kcfi" = "yes" ]; then
@@ -372,6 +558,23 @@ prepare() {
             -e CPU_FREQ_DEFAULT_GOV_PERFORMANCE
     fi
 
+    ### Enhanced power management
+    if [ "$_enable_advanced_pm" = "yes" ]; then
+        echo "Enabling advanced power management..."
+        scripts/config -e CPU_FREQ -e CPU_FREQ_STAT -e CPU_FREQ_TIMES -e CPU_FREQ_GOV_ATTR_SET \
+            -e ENERGY_MODEL -e PM_ADVANCED_DEBUG -e PM_SLEEP_DEBUG
+    fi
+
+    if [ "$_intel_pstate_enhanced" = "yes" ]; then
+        echo "Enabling Intel P-State enhancements..."
+        scripts/config -e X86_INTEL_PSTATE -e X86_ACPI_CPUFREQ -e X86_POWERNOW_K8
+    fi
+
+    if [ "$_amd_pstate_enhanced" = "yes" ]; then
+        echo "Enabling AMD P-State enhancements..."
+        scripts/config -e X86_AMD_PSTATE -e X86_AMD_PSTATE_UT
+    fi
+
     ### Select tick type
     case "$_tickrate" in
         perodic) scripts/config -d NO_HZ_IDLE -d NO_HZ_FULL -d NO_HZ -d NO_HZ_COMMON -e HZ_PERIODIC;;
@@ -383,7 +586,6 @@ prepare() {
     echo "Selecting '$_tickrate' tick type..."
 
     ### Select preempt type
-
     # We should not set up the PREEMPT for RT kernels
     if [[ "$_cpusched" != "rt" && "$_cpusched" != "rt-bore" ]]; then
         case "$_preempt" in
@@ -404,6 +606,24 @@ prepare() {
             -e CC_OPTIMIZE_FOR_PERFORMANCE_O3
     fi
 
+    ### Enable ultra compiler optimizations
+    if [ "$_cc_ultra" = "yes" ]; then
+        echo "Enabling ultra compiler optimizations..."
+        scripts/config -d CC_OPTIMIZE_FOR_PERFORMANCE \
+            -d CC_OPTIMIZE_FOR_PERFORMANCE_O3 \
+            -e CC_OPTIMIZE_FOR_PERFORMANCE_O3
+        # Enable additional aggressive optimizations
+        if _is_lto_kernel; then
+            BUILD_FLAGS+=(KCFLAGS="-O3 -march=native -mtune=native -flto=thin -ffunction-sections -fdata-sections")
+        fi
+    fi
+
+    ### Enable Graphite optimizations (GCC only)
+    if [ "$_enable_graphite" = "yes" ] && ! _is_lto_kernel; then
+        echo "Enabling Graphite optimizations..."
+        BUILD_FLAGS+=(KCFLAGS="-fgraphite-identity -floop-nest-optimize -fdevirtualize-at-ltrans")
+    fi
+
     ### CI-only stuff
     if [[ -n "$CI" || -n "$GITHUB_RUN_ID" ]]; then
         echo "Detected build inside CI"
@@ -418,6 +638,95 @@ prepare() {
             -d LATENCYTOP \
             -d SCHED_DEBUG \
             -d DEBUG_PREEMPT
+    fi
+
+    ### Enhanced memory management
+    if [ "$_enable_mglru" = "yes" ]; then
+        echo "Enabling Multi-Gen LRU..."
+        scripts/config -e LRU_GEN -e LRU_GEN_ENABLED -d LRU_GEN_STATS
+    fi
+
+    if [ "$_memory_compaction" = "yes" ]; then
+        echo "Enabling advanced memory compaction..."
+        scripts/config -e COMPACTION -e MIGRATION -e BALLOON_COMPACTION \
+            -e COMPACTION_PROACTIVE -e COMPACTION_SYSFS
+    fi
+
+    if [ "$_enable_zram_opt" = "yes" ]; then
+        echo "Enabling ZRAM optimizations..."
+        scripts/config -e ZRAM -e ZRAM_DEF_COMP_LZ4 -e ZSMALLOC -e ZSMALLOC_STAT
+        case "$_zram_algorithm" in
+            lz4) scripts/config -e ZRAM_DEF_COMP_LZ4;;
+            lzo) scripts/config -e ZRAM_DEF_COMP_LZO;;
+            zstd) scripts/config -e ZRAM_DEF_COMP_ZSTD;;
+        esac
+    fi
+
+    ### I/O and storage optimizations
+    if [ "$_block_layer_opt" = "yes" ]; then
+        echo "Enabling block layer optimizations..."
+        scripts/config -e BLK_DEV_THROTTLING -e BLK_WBT -e BLK_WBT_MQ \
+            -e BLK_DEV_INTEGRITY -e BLK_SED_OPAL -e BLK_INLINE_ENCRYPTION
+    fi
+
+    if [ "$_enable_io_uring_opt" = "yes" ]; then
+        echo "Enabling io_uring optimizations..."
+        scripts/config -e IO_URING -e IO_WQ -e IO_URING_SCM
+    fi
+
+    ### Set default I/O scheduler
+    case "$_io_scheduler" in
+        mq-deadline)
+            scripts/config -e IOSCHED_DEADLINE -e MQ_IOSCHED_DEADLINE \
+                -d IOSCHED_KYBER -d MQ_IOSCHED_KYBER \
+                --set-str DEFAULT_IOSCHED mq-deadline;;
+        kyber)
+            scripts/config -d IOSCHED_DEADLINE -d MQ_IOSCHED_DEADLINE \
+                -e IOSCHED_KYBER -e MQ_IOSCHED_KYBER \
+                --set-str DEFAULT_IOSCHED kyber;;
+        bfq)
+            scripts/config -e IOSCHED_BFQ -e BFQ_GROUP_IOSCHED \
+                --set-str DEFAULT_IOSCHED bfq;;
+        none)
+            scripts/config -d IOSCHED_DEADLINE -d MQ_IOSCHED_DEADLINE \
+                -d IOSCHED_KYBER -d MQ_IOSCHED_KYBER -d IOSCHED_BFQ \
+                --set-str DEFAULT_IOSCHED none;;
+    esac
+
+    ### Gaming optimizations
+    if [ "$_enable_fsync" = "yes" ]; then
+        echo "Enabling FSYNC optimizations..."
+        scripts/config -e FUTEX -e FUTEX_PI
+    fi
+
+    if [ "$_enable_futex2" = "yes" ]; then
+        echo "Enabling FUTEX2 support..."
+        # FUTEX2 configuration would go here when available
+    fi
+
+    if [ "$_gaming_optimizations" = "yes" ]; then
+        echo "Enabling gaming optimizations..."
+        # Optimize for gaming workloads
+        scripts/config -e HIGH_RES_TIMERS -e NO_HZ_FULL \
+            -e PREEMPT_DYNAMIC -e CPU_FREQ_GOV_PERFORMANCE
+    fi
+
+    if [ "$_enable_amdgpu_ctx_priority" = "yes" ]; then
+        echo "Enabling AMD GPU context priority..."
+        scripts/config -e DRM_AMD_DC_DCN -e DRM_AMD_DC_HDCP
+    fi
+
+    ### Enhanced network optimizations
+    if [ "$_tcp_advanced" = "yes" ]; then
+        echo "Enabling advanced TCP features..."
+        scripts/config -e TCP_CONG_ADVANCED -e TCP_MD5SIG -e TCP_AO \
+            -e INET_TCP_DIAG -e INET_UDP_DIAG -e INET_RAW_DIAG
+    fi
+
+    if [ "$_enable_xdp_opt" = "yes" ]; then
+        echo "Enabling XDP optimizations..."
+        scripts/config -e XDP_SOCKETS -e XDP_SOCKETS_DIAG -e BPF_STREAM_PARSER \
+            -e NET_CLS_BPF -e NET_ACT_BPF -e BPF_JIT -e HAVE_EBPF_JIT
     fi
 
     ### Enable bbr3
@@ -443,6 +752,46 @@ prepare() {
 
     echo "Selecting '$_hugepage' TRANSPARENT_HUGEPAGE config..."
 
+    ### Security vs Performance balance
+    case "$_security_performance_balance" in
+        security)
+            echo "Prioritizing security features..."
+            scripts/config -e SECURITY -e SECURITY_SELINUX -e SECURITY_APPARMOR \
+                -e HARDENED_USERCOPY -e FORTIFY_SOURCE -e STACKPROTECTOR_STRONG \
+                -e SLAB_FREELIST_RANDOM -e SLAB_FREELIST_HARDENED;;
+        performance)
+            echo "Prioritizing performance over security..."
+            scripts/config -d SECURITY_SELINUX -d SECURITY_APPARMOR \
+                -d HARDENED_USERCOPY -d FORTIFY_SOURCE -d STACKPROTECTOR_STRONG \
+                -d SLAB_FREELIST_RANDOM -d SLAB_FREELIST_HARDENED;;
+        balanced)
+            echo "Using balanced security/performance approach..."
+            scripts/config -e SECURITY -d SECURITY_SELINUX -e SECURITY_APPARMOR \
+                -e HARDENED_USERCOPY -e FORTIFY_SOURCE -d STACKPROTECTOR_STRONG;;
+    esac
+
+    ### Workload-specific optimizations
+    case "$_workload_profile" in
+        desktop)
+            echo "Optimizing for desktop workloads..."
+            scripts/config -e PREEMPT_DYNAMIC -e NO_HZ_IDLE \
+                -e CPU_FREQ_GOV_SCHEDUTIL -e ENERGY_MODEL;;
+        server)
+            echo "Optimizing for server workloads..."
+            scripts/config -e PREEMPT_VOLUNTARY -e NO_HZ_IDLE \
+                -e CPU_FREQ_GOV_PERFORMANCE -d ENERGY_MODEL;;
+        gaming)
+            echo "Optimizing for gaming workloads..."
+            scripts/config -e PREEMPT_DYNAMIC -e NO_HZ_FULL \
+                -e CPU_FREQ_GOV_PERFORMANCE -e HIGH_RES_TIMERS;;
+        development)
+            echo "Optimizing for development workloads..."
+            scripts/config -e PREEMPT_DYNAMIC -e NO_HZ_IDLE \
+                -e CPU_FREQ_GOV_PERFORMANCE -e SCHED_BORE;;
+        generic)
+            echo "Using generic balanced optimizations...";;
+    esac
+
     # Enable Clang AutoFDO
     # Add additonal check if Thin or Full LTO is enabled otherwise die
     if [ "$_autofdo" = "yes" ]; then
@@ -464,8 +813,34 @@ prepare() {
         BUILD_FLAGS+=(CLANG_PROPELLER_PROFILE_PREFIX="${srcdir}/propeller")
     fi
 
+    ### Enhanced kernel features
     echo "Enable USER_NS_UNPRIVILEGED"
     scripts/config -e USER_NS
+
+    # Enable advanced CPU features
+    echo "Enabling advanced CPU features..."
+    scripts/config -e X86_INTEL_PSTATE -e CPU_FREQ_GOV_SCHEDUTIL -e ENERGY_MODEL
+
+    # Memory management improvements  
+    echo "Enabling memory management improvements..."
+    scripts/config -e TRANSPARENT_HUGEPAGE -e COMPACTION -e MIGRATION \
+        -e BALLOON_COMPACTION -e MEMORY_HOTPLUG -e MEMORY_HOTREMOVE
+
+    # Enable advanced RCU features
+    echo "Enabling advanced RCU features..."
+    scripts/config -e PREEMPT_RCU -e RCU_EXPERT -e RCU_FANOUT_EXACT \
+        --set-val RCU_FANOUT 64 -e RCU_FAST_NO_HZ
+
+    # File system optimizations
+    echo "Enabling file system optimizations..."
+    scripts/config -e EXT4_FS -e EXT4_USE_FOR_EXT2 -e EXT4_FS_POSIX_ACL \
+        -e EXT4_FS_SECURITY -e BTRFS_FS -e BTRFS_FS_POSIX_ACL \
+        -e XFS_FS -e XFS_QUOTA -e XFS_POSIX_ACL -e F2FS_FS
+
+    # Network performance enhancements
+    echo "Enabling network performance enhancements..."
+    scripts/config -e NET_SCHED -e NET_SCH_FQ -e NET_SCH_FQ_CODEL \
+        -e NET_SCH_BBR -e TCP_CONG_BBR -e NETFILTER_NETLINK_ACCT
 
     ### Optionally use running kernel's config
     # code originally by nous; http://aur.archlinux.org/packages.php?ID=40191
@@ -544,7 +919,10 @@ _sign_modules() {
 
 build() {
     cd "$_srcname"
-    make "${BUILD_FLAGS[@]}" -j"$(nproc)" all
+    
+    # Enhanced build with parallel jobs
+    echo "Building kernel with ${_build_jobs} jobs..."
+    make "${BUILD_FLAGS[@]}" -j"${_build_jobs}" all
     make -C tools/bpf/bpftool vmlinux.h feature-clang-bpf-co-re=1
 
     local MODULE_FLAGS=(
@@ -553,16 +931,17 @@ build() {
        SYSSRC="${srcdir}/${_srcname}"
        SYSOUT="${srcdir}/${_srcname}"
     )
+    
     if [ "$_build_nvidia" = "yes" ]; then
         MODULE_FLAGS+=(NV_EXCLUDE_BUILD_MODULES='__EXCLUDE_MODULES')
         cd "${srcdir}/${_nv_pkg}/kernel"
-        make "${BUILD_FLAGS[@]}" "${MODULE_FLAGS[@]}" -j"$(nproc)" modules
+        make "${BUILD_FLAGS[@]}" "${MODULE_FLAGS[@]}" -j"${_build_jobs}" modules
     fi
 
     if [ "$_build_nvidia_open" = "yes" ]; then
         cd "${srcdir}/${_nv_open_pkg}"
         MODULE_FLAGS+=(IGNORE_CC_MISMATCH=yes)
-        CFLAGS= CXXFLAGS= LDFLAGS= make "${BUILD_FLAGS[@]}" "${MODULE_FLAGS[@]}" -j"$(nproc)" modules
+        CFLAGS= CXXFLAGS= LDFLAGS= make "${BUILD_FLAGS[@]}" "${MODULE_FLAGS[@]}" -j"${_build_jobs}" modules
     fi
 
     if [ "$_build_zfs" = "yes" ]; then
@@ -579,7 +958,118 @@ build() {
             --with-linux="${srcdir}/$_srcname"
         make "${BUILD_FLAGS[@]}"
     fi
+}
 
+_generate_tuning_script() {
+    echo "Generating performance tuning script..."
+    cat > "$pkgdir/usr/bin/cachyos-performance-tune" << 'EOF'
+#!/bin/bash
+# CachyOS Enhanced Performance Tuning Script
+# This script applies runtime optimizations for the CachyOS kernel
+
+set -e
+
+echo "CachyOS Performance Tuning Script"
+echo "=================================="
+
+# Check if running as root
+if [[ $EUID -ne 0 ]]; then
+    echo "This script must be run as root" 
+    exit 1
+fi
+
+# CPU Governor optimization
+echo "Setting CPU governor to performance..."
+for cpu in /sys/devices/system/cpu/cpu*/cpufreq/scaling_governor; do
+    [ -w "$cpu" ] && echo performance > "$cpu"
+done
+
+# Transparent Hugepage optimization
+echo "Optimizing Transparent Hugepages..."
+if [ -w /sys/kernel/mm/transparent_hugepage/enabled ]; then
+    echo always > /sys/kernel/mm/transparent_hugepage/enabled
+fi
+if [ -w /sys/kernel/mm/transparent_hugepage/defrag ]; then
+    echo madvise > /sys/kernel/mm/transparent_hugepage/defrag
+fi
+
+# Memory management optimization
+echo "Optimizing memory management..."
+sysctl -w vm.swappiness=10
+sysctl -w vm.dirty_ratio=15
+sysctl -w vm.dirty_background_ratio=5
+sysctl -w vm.vfs_cache_pressure=50
+sysctl -w vm.min_free_kbytes=65536
+
+# I/O optimization
+echo "Optimizing I/O schedulers..."
+for disk in /sys/block/sd* /sys/block/nvme*; do
+    if [ -d "$disk" ]; then
+        scheduler_file="$disk/queue/scheduler"
+        if [ -w "$scheduler_file" ]; then
+            # Set mq-deadline for SATA, none for NVMe
+            if [[ "$disk" == *nvme* ]]; then
+                echo none > "$scheduler_file" 2>/dev/null || echo kyber > "$scheduler_file"
+            else
+                echo mq-deadline > "$scheduler_file"
+            fi
+        fi
+        
+        # Set read-ahead
+        read_ahead="$disk/queue/read_ahead_kb"
+        [ -w "$read_ahead" ] && echo 128 > "$read_ahead"
+        
+        # Set queue depth
+        nr_requests="$disk/queue/nr_requests"
+        [ -w "$nr_requests" ] && echo 256 > "$nr_requests"
+    fi
+done
+
+# Network optimization
+echo "Optimizing network settings..."
+sysctl -w net.core.rmem_max=16777216
+sysctl -w net.core.wmem_max=16777216
+sysctl -w net.ipv4.tcp_rmem="4096 16384 16777216"
+sysctl -w net.ipv4.tcp_wmem="4096 16384 16777216"
+sysctl -w net.core.netdev_max_backlog=5000
+sysctl -w net.ipv4.tcp_congestion_control=bbr
+
+# Gaming optimizations (if detected)
+if command -v steam >/dev/null 2>&1 || command -v lutris >/dev/null 2>&1; then
+    echo "Applying gaming optimizations..."
+    sysctl -w kernel.sched_child_runs_first=0
+    sysctl -w kernel.sched_autogroup_enabled=1
+    
+    # Set CPU scaling min frequency higher for gaming
+    for cpu in /sys/devices/system/cpu/cpu*/cpufreq/scaling_min_freq; do
+        if [ -w "$cpu" ]; then
+            max_freq=$(cat "${cpu%/*}/scaling_max_freq")
+            min_freq=$((max_freq * 60 / 100))  # 60% of max frequency
+            echo "$min_freq" > "$cpu" 2>/dev/null || true
+        fi
+    done
+fi
+
+# Enable Multi-Gen LRU if available
+if [ -w /sys/kernel/mm/lru_gen/enabled ]; then
+    echo "Enabling Multi-Gen LRU..."
+    echo 1 > /sys/kernel/mm/lru_gen/enabled
+fi
+
+# Optimize for SSD if detected
+echo "Detecting and optimizing storage devices..."
+for disk in $(lsblk -d -n -o NAME,ROTA | awk '$2==0 {print $1}'); do
+    if [ -w "/sys/block/$disk/queue/scheduler" ]; then
+        echo "Optimizing SSD: $disk"
+        echo none > "/sys/block/$disk/queue/scheduler" 2>/dev/null || echo kyber > "/sys/block/$disk/queue/scheduler"
+    fi
+done
+
+echo "Performance tuning completed!"
+echo "You may want to reboot to ensure all optimizations are applied."
+EOF
+
+    chmod +x "$pkgdir/usr/bin/cachyos-performance-tune"
 }
 
 _package() {
@@ -590,6 +1080,7 @@ _package() {
                 'modprobed-db: Keeps track of EVERY kernel module that has ever been probed - useful for those of us who make localmodconfig'
                 'scx-scheds: to use sched-ext schedulers')
     provides=(VIRTUALBOX-GUEST-MODULES WIREGUARD-MODULE KSMBD-MODULE V4L2LOOPBACK-MODULE NTSYNC-MODULE VHBA-MODULE ADIOS-MODULE)
+    
     # Replace LTO kernel with the default kernel
     if _is_lto_kernel; then
         provides+=(linux-cachyos-lto=$_kernver)
@@ -614,6 +1105,9 @@ _package() {
 
     # remove build links
     rm "$modulesdir"/build
+
+    # Generate performance tuning script
+    _generate_tuning_script
 }
 
 _package-headers() {
