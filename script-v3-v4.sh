@@ -17,28 +17,9 @@ sed -i 's/_build_nvidia_open:=no/_build_nvidia_open:=yes/' PKGBUILD
 sed -i 's/_use_auto_optimization:=yes/_use_auto_optimization:=no/' PKGBUILD
 sed -i 's/_use_llvm_lto:=thin/_use_llvm_lto:=none/' PKGBUILD
 
-# 3) Inject config trimming if not already present
+# 3) Patch prepare() in PKGBUILD for trimming (safe insert)
 if ! grep -q "localmodconfig" PKGBUILD; then
-    cat >> PKGBUILD <<'EOF'
-
-# === Fast & Trimmed Config (injected) ===
-prepare() {
-    cd "$srcdir"/linux-*
-    yes "" | make olddefconfig
-    make LSMOD="$srcdir"/../.host-lsmod localmodconfig || true
-
-    ./scripts/config --disable DEBUG_INFO \
-                     --disable DEBUG_KERNEL \
-                     --disable KALLSYMS_ALL || true
-    ./scripts/config --enable KALLSYMS || true
-    ./scripts/config --enable TRIM_UNUSED_KSYMS || true
-    ./scripts/config --enable KERNEL_ZSTD \
-                     --set-val  KERNEL_ZSTD_LEVEL 1 \
-                     --enable MODULE_COMPRESS \
-                     --enable MODULE_COMPRESS_ZSTD || true
-}
-# === End Fast & Trimmed Config ===
-EOF
+    sed -i '/^prepare()/,/^}/ s@^}.*@    yes "" | make olddefconfig\n    make LSMOD="$srcdir"/../.host-lsmod localmodconfig || true\n\n    ./scripts/config --disable DEBUG_INFO \\\n                     --disable DEBUG_KERNEL \\\n                     --disable KALLSYMS_ALL || true\n    ./scripts/config --enable KALLSYMS || true\n    ./scripts/config --enable TRIM_UNUSED_KSYMS || true\n    ./scripts/config --enable KERNEL_ZSTD \\\n                     --set-val  KERNEL_ZSTD_LEVEL 1 \\\n                     --enable MODULE_COMPRESS \\\n                     --enable MODULE_COMPRESS_ZSTD || true\n}# PATCHED@' PKGBUILD
 fi
 
 # 4) Ask user for build type
@@ -61,7 +42,7 @@ fi
 # 5) Apply processor option
 sed -i "s/_processor_opt:=.*/_processor_opt:=${proc_opt}/" PKGBUILD
 
-# 6) Build kernel
+# 6) Build kernel (use local build dir to avoid permission issues)
 export BUILDDIR="$PKGDIR/build"
 mkdir -p "$BUILDDIR"
 
@@ -70,7 +51,7 @@ CC="ccache gcc" \
 CXX="ccache g++" \
 makepkg -si --noconfirm
 
-# 7) Move built package (optional, adjust path as needed)
+# 7) Move built package into repo directory
 mkdir -p "$SCRIPT_DIR/repo/x86_64_${repo_suffix}/cachyos-${repo_suffix}/"
 mv ./*-x86_64_${repo_suffix}.pkg.tar.zst* \
    "$SCRIPT_DIR/repo/x86_64_${repo_suffix}/cachyos-${repo_suffix}/" || true
