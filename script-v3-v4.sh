@@ -17,9 +17,21 @@ sed -i 's/_build_nvidia_open:=no/_build_nvidia_open:=yes/' PKGBUILD
 sed -i 's/_use_auto_optimization:=yes/_use_auto_optimization:=no/' PKGBUILD
 sed -i 's/_use_llvm_lto:=thin/_use_llvm_lto:=none/' PKGBUILD
 
-# 3) Patch prepare() in PKGBUILD for trimming (safe insert)
+# 3) Inject localmodconfig + trimming inside prepare()
 if ! grep -q "localmodconfig" PKGBUILD; then
-    sed -i '/^prepare()/,/^}/ s@^}.*@    yes "" | make olddefconfig\n    make LSMOD="$srcdir"/../.host-lsmod localmodconfig || true\n\n    ./scripts/config --disable DEBUG_INFO \\\n                     --disable DEBUG_KERNEL \\\n                     --disable KALLSYMS_ALL || true\n    ./scripts/config --enable KALLSYMS || true\n    ./scripts/config --enable TRIM_UNUSED_KSYMS || true\n    ./scripts/config --enable KERNEL_ZSTD \\\n                     --set-val  KERNEL_ZSTD_LEVEL 1 \\\n                     --enable MODULE_COMPRESS \\\n                     --enable MODULE_COMPRESS_ZSTD || true\n}# PATCHED@' PKGBUILD
+    sed -i '/^prepare()/a \
+    yes "" | make olddefconfig\n\
+    make LSMOD="$srcdir"/../.host-lsmod localmodconfig || true\n\
+\n\
+    ./scripts/config --disable DEBUG_INFO \\\n\
+                     --disable DEBUG_KERNEL \\\n\
+                     --disable KALLSYMS_ALL || true\n\
+    ./scripts/config --enable KALLSYMS || true\n\
+    ./scripts/config --enable TRIM_UNUSED_KSYMS || true\n\
+    ./scripts/config --enable KERNEL_ZSTD \\\n\
+                     --set-val  KERNEL_ZSTD_LEVEL 1 \\\n\
+                     --enable MODULE_COMPRESS \\\n\
+                     --enable MODULE_COMPRESS_ZSTD || true' PKGBUILD
 fi
 
 # 4) Ask user for build type
