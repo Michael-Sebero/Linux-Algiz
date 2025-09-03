@@ -1,80 +1,74 @@
 #!/usr/bin/env bash
-## Enable ZFS
-find . -name "PKGBUILD" | xargs -I {} sed -i "s/_build_zfs:=no/_build_zfs:=yes/" {}
-## Enable Generic v3
-find . -name "PKGBUILD" | xargs -I {} sed -i "s/_processor_opt:=/_processor_opt:=GENERIC_V3/" {}
-find . -name "PKGBUILD" | xargs -I {} sed -i "s/_use_auto_optimization:=yes/_use_auto_optimization:=no/" {}
-## Enable NVIDIA module
-find . -name "PKGBUILD" | xargs -I {} sed -i "s/_build_nvidia:=no/_build_nvidia:=yes/" {}
-## Enable Open NVIDIA module
-find . -name "PKGBUILD" | xargs -I {} sed -i "s/_build_nvidia_open:=no/_build_nvidia_open:=yes/" {}
-## Disable clang-LTO
-find . -name "PKGBUILD" | xargs -I {} sed -i "s/_use_llvm_lto:=thin/_use_llvm_lto:=none/" {}
+set -euo pipefail
 
-## GCC v3 Kernel
+# Path to your kernel package directory
+PKGDIR="$HOME/Files/GitHub/Linux-Algiz/linux-cachyos"
 
-files=$(find . -name "PKGBUILD")
+cd "$PKGDIR"
 
-for f in $files
-do
-    d=$(dirname $f)
-    cd $d
-    time docker run --name kernelbuild -e EXPORT_PKG=1 -e SYNC_DATABASE=1 -e CHECKSUMS=1 -v $PWD:/pkg pttrr/docker-makepkg-v3
-    docker rm kernelbuild
-    cd ..
-done
+# 1) Snapshot current modules (for localmodconfig tailoring)
+lsmod > .host-lsmod
 
-## LLVM ThinLTO v3 Kernel
-find . -name "PKGBUILD" | xargs -I {} sed -i "s/_use_llvm_lto:=none/_use_llvm_lto:=thin/" {}
+# 2) Patch PKGBUILD toggles
+sed -i 's/_build_zfs:=no/_build_zfs:=yes/' PKGBUILD
+sed -i 's/_build_nvidia:=no/_build_nvidia:=yes/' PKGBUILD
+sed -i 's/_build_nvidia_open:=no/_build_nvidia_open:=yes/' PKGBUILD
+sed -i 's/_use_auto_optimization:=yes/_use_auto_optimization:=no/' PKGBUILD
+sed -i 's/_use_llvm_lto:=thin/_use_llvm_lto:=none/' PKGBUILD
 
-files=$(find . -name "PKGBUILD")
+# 3) Inject config trimming if not already present
+if ! grep -q "localmodconfig" PKGBUILD; then
+    cat >> PKGBUILD <<'EOF'
 
-for f in $files
-do
-    d=$(dirname $f)
-    cd $d
-    time docker run --name kernelbuild -e EXPORT_PKG=1 -e SYNC_DATABASE=1 -e CHECKSUMS=1 -v $PWD:/pkg pttrr/docker-makepkg-v3
-    docker rm kernelbuild
-    cd ..
-done
+# === Fast & Trimmed Config (injected) ===
+prepare() {
+    cd "$srcdir"/linux-*
+    yes "" | make olddefconfig
+    make LSMOD="$srcdir"/../.host-lsmod localmodconfig || true
 
-echo "move kernels to the repo"
-mv */*-x86_64_v3.pkg.tar.zst* /home/ptr1337/.docker/build/nginx/www/repo/x86_64_v3/cachyos-v3/
-RUST_LOG=trace repo-manage-util -p cachyos-v3 update
-## Ensure that repo-add/repoctl catches all new packages
-RUST_LOG=trace repo-manage-util -p cachyos-v3 update
+    ./scripts/config --disable DEBUG_INFO \
+                     --disable DEBUG_KERNEL \
+                     --disable KALLSYMS_ALL || true
+    ./scripts/config --enable KALLSYMS || true
+    ./scripts/config --enable TRIM_UNUSED_KSYMS || true
+    ./scripts/config --enable KERNEL_ZSTD \
+                     --set-val  KERNEL_ZSTD_LEVEL 1 \
+                     --enable MODULE_COMPRESS \
+                     --enable MODULE_COMPRESS_ZSTD || true
+}
 
-## GCC v4 Kernel
-find . -name "PKGBUILD" | xargs -I {} sed -i "s/_use_llvm_lto:=thin/_use_llvm_lto:=none/" {}
-find . -name "PKGBUILD" | xargs -I {} sed -i "s/_processor_opt:=GENERIC_V3/_processor_opt:=GENERIC_V4/" {}
+EOF
+fi
 
-files=$(find . -name "PKGBUILD")
+# 4) Ask user for build type
+echo "Which kernel variant do you want to build?"
+echo "1) GENERIC_V3 (wider compatibility)"
+echo "2) GENERIC_V4 (optimized for newer CPUs)"
+read -rp "Enter 1 or 2: " choice
 
-for f in $files
-do
-    d=$(dirname $f)
-    cd $d
-    time docker run --name kernelbuild -e EXPORT_PKG=1 -e SYNC_DATABASE=1 -e CHECKSUMS=1 -v $PWD:/pkg pttrr/docker-makepkg-v4
-    docker rm kernelbuild
-    cd ..
-done
+if [[ "$choice" == "1" ]]; then
+    proc_opt="GENERIC_V3"
+    repo_suffix="v3"
+elif [[ "$choice" == "2" ]]; then
+    proc_opt="GENERIC_V4"
+    repo_suffix="v4"
+else
+    echo "Invalid choice, exiting."
+    exit 1
+fi
 
-## LLVM ThinLTO v4 Kernel
-find . -name "PKGBUILD" | xargs -I {} sed -i "s/_use_llvm_lto:=none/_use_llvm_lto:=thin/" {}
+# 5) Apply processor option
+sed -i "s/_processor_opt:=.*/_processor_opt:=${proc_opt}/" PKGBUILD
 
-files=$(find . -name "PKGBUILD")
+# 6) Build kernel
+MAKEFLAGS="-j$(nproc)" \
+CC="ccache gcc" \
+CXX="ccache g++" \
+makepkg -si --noconfirm
 
-for f in $files
-do
-    d=$(dirname $f)
-    cd $d
-    time docker run --name kernelbuild -e EXPORT_PKG=1 -e SYNC_DATABASE=1 -e CHECKSUMS=1 -v $PWD:/pkg pttrr/docker-makepkg-v4
-    docker rm kernelbuild
-    cd ..
-done
+# 7) Move built package (optional, adjust path as needed)
+mkdir -p "$HOME/repo/x86_64_${repo_suffix}/cachyos-${repo_suffix}/"
+mv ./*-x86_64_${repo_suffix}.pkg.tar.zst* \
+   "$HOME/repo/x86_64_${repo_suffix}/cachyos-${repo_suffix}/" || true
 
-echo "move kernels to the repo"
-mv */*-x86_64_v4.pkg.tar.zst* /home/ptr1337/.docker/build/nginx/www/repo/x86_64_v4/cachyos-v4/
-RUST_LOG=trace repo-manage-util -p cachyos-v4 update
-## Ensure that repo-add/repoctl catches all new packages
-RUST_LOG=trace repo-manage-util -p cachyos-v4 update
+echo "✅ Kernel build complete for ${proc_opt}"
